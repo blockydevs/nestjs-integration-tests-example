@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:latest
+    container_name: integration_tests_postgres
+    ports:
+      - "5434:5432"
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: integration_tests_database
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - integration_tests_network
+
+  redis:
+    image: redis:latest
+    container_name: integration_tests_redis
+    ports:
+      - "6380:6379"
+    command: redis-server --requirepass '' --appendonly yes
+    volumes:
+      - redis_data:/data
+    networks:
+      - integration_tests_network
+
+volumes:
+  redis_data:
+  postgres_data:
+
+networks:
+  integration_tests_network:
+    driver: bridge
