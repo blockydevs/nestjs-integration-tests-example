@@ -4,20 +4,19 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { HttpService } from '@nestjs/axios';
-import { firstValueFrom } from 'rxjs';
-import { Cart } from './cart.interface';
-import { ProductService } from '../product/product.service';
-import { OrderService } from '../order/order.service';
-import { CustomerService } from '../customer/customer.service';
-import { CustomerEntity } from '../customer/entitites/customer.entity';
+import { Cart } from '../cart.interface';
+import { ProductService } from '../../product/product.service';
+import { OrderService } from '../../order/order.service';
+import { CustomerService } from '../../customer/customer.service';
+import { CustomerEntity } from '../../customer/entitites/customer.entity';
 import { RedisCache } from 'cache-manager-redis-yet';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import * as path from 'path';
+import { promises as fs } from 'fs';
 
 @Injectable()
-export class CartService {
+export class MockCartService {
   constructor(
-    private readonly httpService: HttpService,
     private readonly productService: ProductService,
     private readonly orderService: OrderService,
     private readonly customerService: CustomerService,
@@ -25,7 +24,6 @@ export class CartService {
   ) {}
 
   public async getCartData(cartId: string): Promise<Cart> {
-    console.log('STARTED INTEGRATION TEST! (BAD CLASS)');
     const cachedData = await this.cacheManager.get<Cart>(cartId);
 
     if (cachedData) {
@@ -33,9 +31,7 @@ export class CartService {
       return cachedData;
     }
 
-    const { data } = await firstValueFrom(
-      this.httpService.get(`https://fakestoreapi.com/carts/${cartId}`),
-    );
+    const { data } = await this.getMockData(cartId);
 
     if (!data) {
       throw new NotFoundException(
@@ -81,4 +77,19 @@ export class CartService {
       totalValue: cartValue,
     });
   }
+
+  private async getMockData(cartId: string): Promise<{ data: any } | null> {
+    const fullPath = path.join(__dirname, 'cart', `${cartId}.json`);
+    try {
+      const data = await fs.readFile(fullPath, 'utf-8');
+      console.log(`Found data: ${JSON.stringify(JSON.parse(data), null, 2)}`);
+      return { data: JSON.parse(data) };
+    } catch (e) {
+      console.error(
+        `Error reading cart (id: ${cartId}) JSON file: ${e.message}`,
+      );
+      return null;
+    }
+  }
+
 }

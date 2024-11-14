@@ -8,7 +8,7 @@ import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { TestIntegrationTeardown } from './test-integration-teardown';
 import { OrderEntity } from '../src/order/entities/order.entity';
 import { CustomerEntity } from '../src/customer/entitites/customer.entity';
-import { OrderCreateCommand } from '../src/order/order.interface';
+import * as request from 'supertest';
 
 describe('Integration tests CartService', () => {
   let postgresContainer: StartedPostgreSqlContainer;
@@ -22,27 +22,41 @@ describe('Integration tests CartService', () => {
     await app.init();
   });
 
-  it('Test access to postgres test container', async () => {
-    const mockCustomer: CustomerEntity = new CustomerEntity();
-    const mockOrder: OrderCreateCommand = {
-      cartId: 'cartId',
-      dateCompleted: new Date(),
-      customer: mockCustomer,
-      totalValue: 2137.0,
-    };
-    const repo = app.get(DataSource).getRepository(OrderEntity);
-    let res = await repo.count();
+  describe('Test processing carts', async () => {
+    it('should process cart correctly', async () => {
+      const testedCartId = '1';
+      const testedCustomerId = '1';
 
-    console.log(`Count Order entities in DB ${res}`);
-    await repo.insert(mockOrder);
-    res = await repo.count();
-    console.log(`Count Order entities in DB ${res}`);
+      const response = await request(app.getHttpServer())
+        .post('/cart/finalize')
+        .query({
+          cartId: testedCartId,
+        });
+
+      const orderRepository = app.get(DataSource).getRepository(OrderEntity);
+      const customerRepository = app
+        .get(DataSource)
+        .getRepository(CustomerEntity);
+
+      const orders = await orderRepository.find({
+        where: {
+          cartId: testedCartId,
+        },
+      });
+
+      const customer = await customerRepository.findOne({
+        where: {
+          customerId: testedCustomerId,
+        },
+      });
+
+      expect(orders).toHaveLength(1);
+      expect(customer).toBeTruthy();
+      expect(response).toBeTruthy();
+    });
   });
 
   afterEach(async () => {
-    // clean up envs
-    // dotenv.config({ path: '.env.integration', override: true });
-
     // clean up tables and redis cache after each test
     await app.get(DataSource).getRepository(OrderEntity).delete({});
     await app.get(DataSource).getRepository(CustomerEntity).delete({});

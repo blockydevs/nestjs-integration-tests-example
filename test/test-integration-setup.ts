@@ -9,6 +9,10 @@ import { INestApplication } from '@nestjs/common';
 
 import * as dotenv from 'dotenv';
 import * as process from 'node:process';
+import { MockProductService } from '../src/product/mocks/mock-product.service';
+import { ProductService } from '../src/product/product.service';
+import { CartService } from '../src/cart/cart.service';
+import { MockCartService } from '../src/cart/mocks/mock-cart.service';
 
 dotenv.config({ path: '.env.integration', override: true });
 jest.setTimeout(30000); // testcontainers require longer timeout for setup
@@ -37,7 +41,12 @@ export class TestIntegrationSetup {
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
-    }).compile();
+    })
+      .overrideProvider(ProductService)
+      .useClass(MockProductService)
+      .overrideProvider(CartService)
+      .useClass(MockCartService)
+      .compile();
 
     const app: INestApplication = moduleFixture.createNestApplication();
 
