@@ -17,7 +17,7 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:int": "jest --config ./test/jest-integration.json",
+    "test:int": "dotenv -e .env.integration -- jest --config ./test/jest-integration.json",
     "migration:generate": "npx typeorm-ts-node-commonjs migration:generate ./src/migrations/schema-update -d ./src/config/typeorm.ts",
     "migration:show": "npx typeorm-ts-node-commonjs migration:show -d ./src/config/typeorm.ts",
     "migration:run": "npx typeorm-ts-node-commonjs migration:run -d  ./src/config/typeorm.ts",
@@ -33,6 +33,7 @@
     "@nestjs/typeorm": "^10.0.2",
     "axios": "^1.7.7",
     "cache-manager-redis-yet": "^5.1.5",
+    "dotenv-cli": "^7.4.2",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
     "typeorm": "0.3.20"
