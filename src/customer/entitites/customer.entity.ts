@@ -1,11 +1,11 @@
 import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 import { Uuid } from '../../common/common.interface';
 
-@Entity('client')
-export class ClientEntity {
+@Entity('customer')
+export class CustomerEntity {
   @PrimaryGeneratedColumn('uuid')
   id: Uuid;
 
-  @Column({ name: 'client_id', unique: true })
-  clientId: string;
+  @Column({ name: 'customer_id', unique: true })
+  customerId: string;
 }

@@ -4,9 +4,10 @@ import { AppService } from './app.service';
 import { CartModule } from './cart/cart.module';
 import { ProductModule } from './product/product.module';
 import { OrderModule } from './order/order.module';
-import { ClientModule } from './client/client.module';
+import { CustomerModule } from './customer/customer.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { dataSource } from './config/typeorm';
+import { HttpModule } from '@nestjs/axios';
 
 @Module({
   imports: [
@@ -16,7 +17,8 @@ import { dataSource } from './config/typeorm';
     CartModule,
     ProductModule,
     OrderModule,
-    ClientModule,
+    CustomerModule,
+    HttpModule,
   ],
   controllers: [AppController],
   providers: [AppService],

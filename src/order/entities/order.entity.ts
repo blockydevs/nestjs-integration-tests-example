@@ -6,12 +6,15 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Uuid } from '../../common/common.interface';
-import { ClientEntity } from '../../client/entitites/client.entity';
+import { CustomerEntity } from '../../customer/entitites/customer.entity';
 
 @Entity('order')
 export class OrderEntity {
   @PrimaryGeneratedColumn('uuid')
   id: Uuid;
+
+  @Column({ name: 'cart_id' })
+  cartId: string;
 
   @Column({
     type: 'timestamp',
@@ -21,7 +24,10 @@ export class OrderEntity {
   })
   dateCompleted: Date;
 
-  @JoinColumn({ name: 'client_id' })
-  @ManyToOne(() => ClientEntity)
-  client: ClientEntity;
+  @JoinColumn({ name: 'customer_id' })
+  @ManyToOne(() => CustomerEntity)
+  customer: CustomerEntity;
+
+  @Column({ type: 'float', name: 'total_value' })
+  totalValue: number;
 }
