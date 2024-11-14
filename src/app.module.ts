@@ -10,6 +10,7 @@ import { dataSource } from './config/typeorm';
 import { HttpModule } from '@nestjs/axios';
 import { CACHE_MANAGER, CacheModule } from '@nestjs/cache-manager';
 import { RedisCache, redisStore } from 'cache-manager-redis-yet';
+import { dataSourceTest } from './config/typeorm-test';
 
 @Module({
   imports: [
@@ -29,7 +30,11 @@ import { RedisCache, redisStore } from 'cache-manager-redis-yet';
       isGlobal: true,
     }),
     TypeOrmModule.forRootAsync({
-      useFactory: () => dataSource.options,
+      useFactory: () => {
+        return process.env.NODE_ENV === 'test'
+          ? dataSourceTest.options
+          : dataSource.options;
+      },
     }),
     CartModule,
     ProductModule,
