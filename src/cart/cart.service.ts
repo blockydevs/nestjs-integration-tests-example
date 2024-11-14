@@ -1,5 +1,6 @@
 import {
   ConflictException,
+  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -10,6 +11,8 @@ import { ProductService } from '../product/product.service';
 import { OrderService } from '../order/order.service';
 import { CustomerService } from '../customer/customer.service';
 import { CustomerEntity } from '../customer/entitites/customer.entity';
+import { RedisCache } from 'cache-manager-redis-yet';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
 
 @Injectable()
 export class CartService {
@@ -18,9 +21,17 @@ export class CartService {
     private readonly productService: ProductService,
     private readonly orderService: OrderService,
     private readonly customerService: CustomerService,
+    @Inject(CACHE_MANAGER) private cacheManager: RedisCache,
   ) {}
 
   public async getCartData(cartId: string): Promise<Cart> {
+    const cachedData = await this.cacheManager.get<Cart>(cartId);
+
+    if (cachedData) {
+      console.log(`Reading cart data for cartId(CACHED): ${cartId}`);
+      return cachedData;
+    }
+
     const { data } = await firstValueFrom(
       this.httpService.get(`https://fakestoreapi.com/carts/${cartId}`),
     );
@@ -30,6 +41,8 @@ export class CartService {
         `Cart with id ${cartId} not found in the external API.`,
       );
     }
+
+    await this.cacheManager.set(cartId, data as Cart);
 
     return data as Cart;
   }
