@@ -1,25 +1,23 @@
 import {
+  BadRequestException,
   ConflictException,
-  HttpException,
-  HttpStatus,
   Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { HttpService } from '@nestjs/axios';
-import { firstValueFrom } from 'rxjs';
-import { Cart } from './cart.interface';
-import { ProductService } from '../product/product.service';
-import { OrderService } from '../order/order.service';
-import { CustomerService } from '../customer/customer.service';
-import { CustomerEntity } from '../customer/entitites/customer.entity';
+import { Cart } from '../cart.interface';
+import { ProductService } from '../../product/product.service';
+import { OrderService } from '../../order/order.service';
+import { CustomerService } from '../../customer/customer.service';
+import { CustomerEntity } from '../../customer/entitites/customer.entity';
 import { RedisCache } from 'cache-manager-redis-yet';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import * as path from 'path';
+import { promises as fs } from 'fs';
 
 @Injectable()
-export class CartService {
+export class MockCartService {
   constructor(
-    private readonly httpService: HttpService,
     private readonly productService: ProductService,
     private readonly orderService: OrderService,
     private readonly customerService: CustomerService,
@@ -27,7 +25,6 @@ export class CartService {
   ) {}
 
   public async getCartData(cartId: string): Promise<Cart> {
-    console.log('STARTED INTEGRATION TEST! (BAD CLASS)');
     const cachedData = await this.cacheManager.get<Cart>(cartId);
 
     if (cachedData) {
@@ -35,9 +32,7 @@ export class CartService {
       return cachedData;
     }
 
-    const { data } = await firstValueFrom(
-      this.httpService.get(`https://fakestoreapi.com/carts/${cartId}`),
-    );
+    const { data } = await this.getMockData(cartId);
 
     if (!data) {
       throw new NotFoundException(
@@ -62,17 +57,21 @@ export class CartService {
     let cartValue: number = 0;
 
     for (const product of cartData.products) {
-      if (product.productId === 1000) {
-        throw new HttpException('Custom conflict message', HttpStatus.CONFLICT);
+      let p;
+      try {
+        p = await this.productService.getProductData(product.productId);
+      } catch (error) {
+        throw error;
       }
-      const p = await this.productService.getProductData(product.productId);
       cartValue += p.price;
     }
 
     console.log(`Cart ${cartId} has total value of: ${cartValue}`);
 
     if (cartValue === 0) {
-      throw new Error(`Cannot complete transaction for empty cart: ${cartId}`);
+      throw new BadRequestException(
+        `Cannot complete transaction for empty cart: ${cartId}`,
+      );
     }
 
     const customerEntity: CustomerEntity =
@@ -86,5 +85,19 @@ export class CartService {
       customer: customerEntity,
       totalValue: cartValue,
     });
+  }
+
+  private async getMockData(cartId: string): Promise<{ data: any }> {
+    const fullPath = path.join(__dirname, 'cart', `${cartId}.json`);
+    try {
+      const data = await fs.readFile(fullPath, 'utf-8');
+      console.log(`Found data: ${JSON.stringify(JSON.parse(data), null, 2)}`);
+      return { data: JSON.parse(data) };
+    } catch (e) {
+      console.error(
+        `Error reading cart (id: ${cartId}) JSON file: ${e.message}`,
+      );
+      return { data: JSON.parse(null) };
+    }
   }
 }

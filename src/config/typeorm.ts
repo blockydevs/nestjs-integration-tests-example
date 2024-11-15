@@ -10,16 +10,18 @@ const logging: LoggerOptions = process.env.DATABASE_LOGGING_LEVEL
 
 const config: DataSourceOptions = {
   type: 'postgres',
+  schema: process.env.DATABASE_SCHEMA || 'public',
   host: process.env.DATABASE_HOST || 'localhost',
-  port: parseInt(process.env.DATABASE_PORT, 10) || 5434,
-  username: process.env.DATABASE_USERNAME || 'admin',
-  password: process.env.DATABASE_PASSWORD || 'admin',
-  database: process.env.DATABASE_NAME || 'integration_tests_database',
+  port: parseInt(process.env.DATABASE_PORT, 10) || 5432,
+  username: process.env.DATABASE_USERNAME || 'mantra',
+  password: process.env.DATABASE_PASSWORD || 'mantra',
+  database: process.env.DATABASE_NAME || 'mantra_quest_handler',
   entities: ['dist/**/*.entity{.ts,.js}'],
   migrations: ['dist/migrations/*{.ts,.js}'],
   logging: logging,
   synchronize: process.env.DATABASE_SYNCHRONIZE === 'true',
   migrationsRun: process.env.DATABASE_AUTO_RUN_MIGRATIONS === 'true',
+  maxQueryExecutionTime: 2000,
 };
 
 export default registerAs('typeorm', () => config);
