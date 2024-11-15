@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { Product } from '../product.interface';
 import * as path from 'path';
 import { promises as fs } from 'fs';
@@ -9,10 +9,16 @@ export class MockProductService {
 
   public async getProductData(productId: number): Promise<Product> {
     const { data } = await this.getMockData(productId.toString());
+
+    if (!data) {
+      throw new NotFoundException(
+        `Product with id ${productId} not found in the external API.`,
+      );
+    }
     return data;
   }
 
-  private async getMockData(productId: string): Promise<any> {
+  private async getMockData(productId: string): Promise<{ data: any }> {
     const fullPath = path.join(__dirname, 'product', `${productId}.json`);
     try {
       const data = await fs.readFile(fullPath, 'utf-8');
@@ -22,9 +28,9 @@ export class MockProductService {
       return { data: JSON.parse(data) };
     } catch (e) {
       console.error(
-        `Error reading cart (id: ${productId}) JSON file: ${e.message}`,
+        `Error reading product (id: ${productId}) JSON file: ${e.message}`,
       );
-      return null;
+      return { data: JSON.parse(null) };
     }
   }
 }

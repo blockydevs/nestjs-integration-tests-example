@@ -1,5 +1,7 @@
 import {
   ConflictException,
+  HttpException,
+  HttpStatus,
   Inject,
   Injectable,
   NotFoundException,
@@ -58,11 +60,15 @@ export class CartService {
 
     const cartData: Cart = await this.getCartData(cartId);
     let cartValue: number = 0;
+
     for (const product of cartData.products) {
-      cartValue += await this.productService
-        .getProductData(product.productId)
-        .then((p) => p.price);
+      if (product.productId === 1000) {
+        throw new HttpException('Custom conflict message', HttpStatus.CONFLICT);
+      }
+      const p = await this.productService.getProductData(product.productId);
+      cartValue += p.price;
     }
+
     console.log(`Cart ${cartId} has total value of: ${cartValue}`);
 
     if (cartValue === 0) {

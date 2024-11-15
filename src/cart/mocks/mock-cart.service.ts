@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   Inject,
   Injectable,
@@ -54,15 +55,23 @@ export class MockCartService {
 
     const cartData: Cart = await this.getCartData(cartId);
     let cartValue: number = 0;
+
     for (const product of cartData.products) {
-      cartValue += await this.productService
-        .getProductData(product.productId)
-        .then((p) => p.price);
+      let p;
+      try {
+        p = await this.productService.getProductData(product.productId);
+      } catch (error) {
+        throw error;
+      }
+      cartValue += p.price;
     }
+
     console.log(`Cart ${cartId} has total value of: ${cartValue}`);
 
     if (cartValue === 0) {
-      throw new Error(`Cannot complete transaction for empty cart: ${cartId}`);
+      throw new BadRequestException(
+        `Cannot complete transaction for empty cart: ${cartId}`,
+      );
     }
 
     const customerEntity: CustomerEntity =
@@ -78,7 +87,7 @@ export class MockCartService {
     });
   }
 
-  private async getMockData(cartId: string): Promise<{ data: any } | null> {
+  private async getMockData(cartId: string): Promise<{ data: any }> {
     const fullPath = path.join(__dirname, 'cart', `${cartId}.json`);
     try {
       const data = await fs.readFile(fullPath, 'utf-8');
@@ -88,8 +97,7 @@ export class MockCartService {
       console.error(
         `Error reading cart (id: ${cartId}) JSON file: ${e.message}`,
       );
-      return null;
+      return { data: JSON.parse(null) };
     }
   }
-
 }
