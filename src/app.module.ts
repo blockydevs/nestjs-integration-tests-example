@@ -1,39 +1,46 @@
 import { Inject, Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
-import { CartModule } from './cart/cart.module';
-import { ProductModule } from './product/product.module';
-import { OrderModule } from './order/order.module';
-import { CustomerModule } from './customer/customer.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { dataSource } from './config/typeorm';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { HttpModule } from '@nestjs/axios';
-import { CACHE_MANAGER, CacheModule } from '@nestjs/cache-manager';
 import { RedisCache, redisStore } from 'cache-manager-redis-yet';
-import { dataSourceTest } from './config/typeorm-test';
+import { CACHE_MANAGER, CacheModule } from '@nestjs/cache-manager';
+import typeorm from './config/typeorm';
+import typeorm_test from './config/typeorm-tests';
+import { CustomerModule } from './customer/customer.module';
+import { OrderModule } from './order/order.module';
+import { ProductModule } from './product/product.module';
+import { CartModule } from './cart/cart.module';
 
 @Module({
   imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: '.env',
+      load: [typeorm, typeorm_test],
+    }),
     CacheModule.registerAsync({
-      useFactory: async () => {
+      imports: [ConfigModule],
+      useFactory: async (configService: ConfigService) => {
         return {
           store: redisStore,
-          database: process.env.REDIS_DEFAULT_DB || '1',
+          database: configService.get('REDIS_DEFAULT_DB') || '1',
           socket: {
-            host: process.env.REDIS_HOST || 'localhost',
-            port: parseInt(process.env.REDIS_PORT || '6379'),
-            password: process.env.REDIS_PASSWORD || '',
-            ttl: parseInt(process.env.CACHE_DEFAULT_TTL || '5000'),
+            host: configService.get('REDIS_HOST') || 'localhost',
+            port: parseInt(configService.get('REDIS_PORT') || '6379'),
+            password: configService.get('REDIS_PASSWORD') || '',
+            ttl: parseInt(configService.get('CACHE_DEFAULT_TTL') || '5000'),
           },
         };
       },
       isGlobal: true,
+      inject: [ConfigService],
     }),
     TypeOrmModule.forRootAsync({
-      useFactory: () => {
-        return process.env.NODE_ENV === 'test'
-          ? dataSourceTest.options
-          : dataSource.options;
+      inject: [ConfigService],
+      useFactory: async (configService: ConfigService) => {
+        return configService.get('NODE_ENV') === 'test'
+          ? configService.get('typeorm_test')
+          : configService.get('typeorm');
       },
     }),
     CartModule,
@@ -42,8 +49,8 @@ import { dataSourceTest } from './config/typeorm-test';
     CustomerModule,
     HttpModule,
   ],
-  controllers: [AppController],
-  providers: [AppService],
+  controllers: [],
+  providers: [],
 })
 export class AppModule {
   constructor(@Inject(CACHE_MANAGER) private cacheManager: RedisCache) {}
