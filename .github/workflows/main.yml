@@ -22,4 +22,4 @@ jobs:
       - name: Install dependencies
         run: pnpm install
       - name: Run integration tests
-        run: pnpm test:int
+        run: pnpm test:integration
