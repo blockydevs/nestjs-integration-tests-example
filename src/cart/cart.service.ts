@@ -1,13 +1,10 @@
 import {
+  BadRequestException,
   ConflictException,
-  HttpException,
-  HttpStatus,
   Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { HttpService } from '@nestjs/axios';
-import { firstValueFrom } from 'rxjs';
 import { Cart } from './cart.interface';
 import { ProductService } from '../product/product.service';
 import { OrderService } from '../order/order.service';
@@ -15,19 +12,20 @@ import { CustomerService } from '../customer/customer.service';
 import { CustomerEntity } from '../customer/entitites/customer.entity';
 import { RedisCache } from 'cache-manager-redis-yet';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { StoreManagerPort } from '../store-manager/store-manager.port';
 
 @Injectable()
 export class CartService {
   constructor(
-    private readonly httpService: HttpService,
     private readonly productService: ProductService,
     private readonly orderService: OrderService,
     private readonly customerService: CustomerService,
+    @Inject(StoreManagerPort)
+    private readonly storeManagerPort: StoreManagerPort,
     @Inject(CACHE_MANAGER) private cacheManager: RedisCache,
   ) {}
 
   public async getCartData(cartId: string): Promise<Cart> {
-    console.log('STARTED INTEGRATION TEST! (BAD CLASS)');
     const cachedData = await this.cacheManager.get<Cart>(cartId);
 
     if (cachedData) {
@@ -35,19 +33,17 @@ export class CartService {
       return cachedData;
     }
 
-    const { data } = await firstValueFrom(
-      this.httpService.get(`https://fakestoreapi.com/carts/${cartId}`),
-    );
+    const cartData = await this.storeManagerPort.getCartData(cartId);
 
-    if (!data) {
+    if (!cartData) {
       throw new NotFoundException(
         `Cart with id ${cartId} not found in the external API.`,
       );
     }
 
-    await this.cacheManager.set(cartId, data as Cart);
+    await this.cacheManager.set(cartId, cartData);
 
-    return data as Cart;
+    return cartData;
   }
 
   public async finalizeCart(cartId: string) {
@@ -61,19 +57,18 @@ export class CartService {
     const cartData: Cart = await this.getCartData(cartId);
     let cartValue: number = 0;
 
+    if (cartData.products.length === 0) {
+      throw new BadRequestException(
+        `Cannot complete transaction for empty cart: ${cartId}`,
+      );
+    }
+
     for (const product of cartData.products) {
-      if (product.productId === 1000) {
-        throw new HttpException('Custom conflict message', HttpStatus.CONFLICT);
-      }
       const p = await this.productService.getProductData(product.productId);
       cartValue += p.price;
     }
 
     console.log(`Cart ${cartId} has total value of: ${cartValue}`);
-
-    if (cartValue === 0) {
-      throw new Error(`Cannot complete transaction for empty cart: ${cartId}`);
-    }
 
     const customerEntity: CustomerEntity =
       await this.customerService.getOrCreateCustomerById(

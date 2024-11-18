@@ -10,6 +10,7 @@ import { CustomerModule } from './customer/customer.module';
 import { OrderModule } from './order/order.module';
 import { ProductModule } from './product/product.module';
 import { CartModule } from './cart/cart.module';
+import { StoreManagerModule } from './store-manager/store-manager.module';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { CartModule } from './cart/cart.module';
     OrderModule,
     CustomerModule,
     HttpModule,
+    StoreManagerModule,
   ],
   controllers: [],
   providers: [],

@@ -8,7 +8,7 @@ const config: DataSourceOptions = {
   port: 5432,
   username: 'postgres',
   password: 'postgres',
-  database: 'mantra_quest_tests',
+  database: 'postgres',
   entities: ['dist/**/*.entity{.ts,.js}'],
   synchronize: true,
 };
