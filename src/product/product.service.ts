@@ -1,24 +1,25 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { HttpService } from '@nestjs/axios';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { Product } from './product.interface';
-import { firstValueFrom } from 'rxjs';
+import { StoreManagerPort } from '../store-manager/store-manager.port';
 
 @Injectable()
 export class ProductService {
-  constructor(private readonly httpService: HttpService) {}
+  constructor(
+    @Inject(StoreManagerPort)
+    private readonly storeManagerPort: StoreManagerPort,
+  ) {}
 
   public async getProductData(productId: number): Promise<Product> {
-    const { data } = await firstValueFrom(
-      this.httpService.get(`https://fakestoreapi.com/products/${productId}`),
+    const productData = await this.storeManagerPort.getProductData(
+      productId.toString(),
     );
-
-    if (!data) {
+    if (!productData) {
       console.log(`Product ${productId} not found`);
       throw new NotFoundException(
         `Product with id ${productId} not found in the external API.`,
       );
     }
 
-    return data;
+    return productData;
   }
 }

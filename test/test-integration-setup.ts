@@ -8,10 +8,6 @@ import { AppModule } from '../src/app.module';
 import { INestApplication } from '@nestjs/common';
 import * as dotenv from 'dotenv';
 import * as process from 'node:process';
-import { MockProductService } from '../src/product/mocks/mock-product.service';
-import { ProductService } from '../src/product/product.service';
-import { CartService } from '../src/cart/cart.service';
-import { MockCartService } from '../src/cart/mocks/mock-cart.service';
 import { ConfigService } from '@nestjs/config';
 
 dotenv.config({ path: '.env.integration', override: true });
@@ -68,10 +64,6 @@ export class TestIntegrationSetup {
           return process.env[key];
         },
       })
-      .overrideProvider(ProductService)
-      .useClass(MockProductService)
-      .overrideProvider(CartService)
-      .useClass(MockCartService)
       .compile();
 
     const app: INestApplication = moduleFixture.createNestApplication();
