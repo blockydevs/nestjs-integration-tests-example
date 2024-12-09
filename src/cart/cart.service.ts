@@ -3,6 +3,7 @@ import {
   ConflictException,
   Inject,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { Cart } from './cart.interface';
@@ -13,9 +14,12 @@ import { CustomerEntity } from '../customer/entitites/customer.entity';
 import { RedisCache } from 'cache-manager-redis-yet';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { StoreManagerPort } from '../store-manager/store-manager.port';
+import { Utils } from '../utils/utils';
 
 @Injectable()
 export class CartService {
+  private readonly logger = new Logger(CartService.name);
+
   constructor(
     private readonly productService: ProductService,
     private readonly orderService: OrderService,
@@ -29,7 +33,7 @@ export class CartService {
     const cachedData = await this.cacheManager.get<Cart>(cartId);
 
     if (cachedData) {
-      console.log(`Reading cart data for cartId(CACHED): ${cartId}`);
+      this.logger.log(`Reading cart data for cartId(CACHED): ${cartId}`);
       return cachedData;
     }
 
@@ -55,7 +59,7 @@ export class CartService {
     }
 
     const cartData: Cart = await this.getCartData(cartId);
-    let cartValue: number = 0;
+    let cartValue: bigint = BigInt(0);
 
     if (cartData.products.length === 0) {
       throw new BadRequestException(
@@ -63,12 +67,18 @@ export class CartService {
       );
     }
 
-    for (const product of cartData.products) {
-      const p = await this.productService.getProductData(product.productId);
-      cartValue += p.price;
-    }
+    const productPrices = await Promise.all(
+      cartData.products.map((product) =>
+        this.productService.getProductData(product.productId),
+      ),
+    );
 
-    console.log(`Cart ${cartId} has total value of: ${cartValue}`);
+    cartValue = productPrices.reduce(
+      (acc, product) => acc + Utils.toCents(product.price),
+      BigInt(0),
+    );
+
+    this.logger.log(`Cart ${cartId} has total value of: ${cartValue}`);
 
     const customerEntity: CustomerEntity =
       await this.customerService.getOrCreateCustomerById(
@@ -77,7 +87,6 @@ export class CartService {
 
     return await this.orderService.saveOrder({
       cartId: cartId,
-      dateCompleted: new Date(cartData.date),
       customer: customerEntity,
       totalValue: cartValue,
     });

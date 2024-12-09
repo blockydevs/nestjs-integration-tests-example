@@ -1,6 +1,8 @@
 import { Controller, Get, Post, Query } from '@nestjs/common';
 import { CartService } from './cart.service';
 import { Cart } from './cart.interface';
+import { Utils } from '../utils/utils';
+import { OrderSerializableEntity } from '../common/common.interface';
 import { OrderEntity } from '../order/entities/order.entity';
 
 @Controller('cart')
@@ -15,7 +17,12 @@ export class CartController {
   @Post('/finalize')
   public async finalizeCart(
     @Query('cartId') cartId: string,
-  ): Promise<OrderEntity> {
-    return await this.cartService.finalizeCart(cartId);
+  ): Promise<OrderSerializableEntity> {
+    const response: OrderEntity = await this.cartService.finalizeCart(cartId);
+
+    return {
+      ...response,
+      totalValue: Utils.fromCents(response.totalValue),
+    };
   }
 }
