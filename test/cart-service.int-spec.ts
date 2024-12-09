@@ -46,7 +46,7 @@ describe('Integration tests CartService', () => {
 
       const customer = await customerRepository.findOne({
         where: {
-          customerId: testedCustomerId,
+          externalId: testedCustomerId,
         },
       });
 
@@ -66,13 +66,12 @@ describe('Integration tests CartService', () => {
 
       await orderRepository.insert({
         cartId: testedCartId,
-        dateCompleted: new Date(),
         customer: new CustomerEntity(),
-        totalValue: 123,
+        totalValue: BigInt(123),
       });
 
       await customerRepository.insert({
-        customerId: testedCustomerId,
+        externalId: testedCustomerId,
       });
 
       const response = await request(app.getHttpServer())
@@ -89,7 +88,7 @@ describe('Integration tests CartService', () => {
 
       const customer = await customerRepository.findOne({
         where: {
-          customerId: testedCustomerId,
+          externalId: testedCustomerId,
         },
       });
 
@@ -114,7 +113,7 @@ describe('Integration tests CartService', () => {
         .getRepository(CustomerEntity);
 
       await customerRepository.insert({
-        customerId: testedCustomerId,
+        externalId: testedCustomerId,
       });
 
       const response = await request(app.getHttpServer())
@@ -131,7 +130,7 @@ describe('Integration tests CartService', () => {
 
       const customer = await customerRepository.findOne({
         where: {
-          customerId: testedCustomerId,
+          externalId: testedCustomerId,
         },
       });
 
@@ -152,7 +151,7 @@ describe('Integration tests CartService', () => {
         .getRepository(CustomerEntity);
 
       await customerRepository.insert({
-        customerId: testedCustomerId,
+        externalId: testedCustomerId,
       });
 
       const response = await request(app.getHttpServer())
@@ -169,7 +168,7 @@ describe('Integration tests CartService', () => {
 
       const customer = await customerRepository.findOne({
         where: {
-          customerId: testedCustomerId,
+          externalId: testedCustomerId,
         },
       });
 
@@ -208,7 +207,7 @@ describe('Integration tests CartService', () => {
 
       const customer = await customerRepository.findOne({
         where: {
-          customerId: testedCustomerId,
+          externalId: testedCustomerId,
         },
       });
 
@@ -246,7 +245,7 @@ describe('Integration tests CartService', () => {
 
       const customer = await customerRepository.findOne({
         where: {
-          customerId: testedCustomerId,
+          externalId: testedCustomerId,
         },
       });
 

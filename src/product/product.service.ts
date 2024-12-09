@@ -1,9 +1,11 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { Product } from './product.interface';
 import { StoreManagerPort } from '../store-manager/store-manager.port';
 
 @Injectable()
 export class ProductService {
+  private readonly logger = new Logger(ProductService.name);
+
   constructor(
     @Inject(StoreManagerPort)
     private readonly storeManagerPort: StoreManagerPort,
@@ -14,7 +16,7 @@ export class ProductService {
       productId.toString(),
     );
     if (!productData) {
-      console.log(`Product ${productId} not found`);
+      this.logger.log(`Product ${productId} not found`);
       throw new NotFoundException(
         `Product with id ${productId} not found in the external API.`,
       );
