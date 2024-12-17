@@ -3,7 +3,7 @@ import { TestIntegrationSetup } from './test-integration-setup';
 import { StartedPostgreSqlContainer } from '@testcontainers/postgresql';
 import { StartedRedisContainer } from '@testcontainers/redis';
 import { INestApplication } from '@nestjs/common';
-import { DataSource } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { TestIntegrationTeardown } from './test-integration-teardown';
 import { OrderEntity } from '../src/order/entities/order.entity';
@@ -14,12 +14,17 @@ describe('Integration tests CartService', () => {
   let postgresContainer: StartedPostgreSqlContainer;
   let redisContainer: StartedRedisContainer;
   let app: INestApplication;
+  let orderRepository: Repository<OrderEntity>;
+  let customerRepository: Repository<CustomerEntity>;
 
   beforeAll(async () => {
     ({ app, postgresContainer, redisContainer } =
       await TestIntegrationSetup.setup());
 
     await app.init();
+
+    orderRepository = app.get(DataSource).getRepository(OrderEntity);
+    customerRepository = app.get(DataSource).getRepository(CustomerEntity);
   });
 
   describe('Test processing carts', async () => {
@@ -33,11 +38,6 @@ describe('Integration tests CartService', () => {
           cartId: testedCartId,
         });
 
-      const orderRepository = app.get(DataSource).getRepository(OrderEntity);
-      const customerRepository = app
-        .get(DataSource)
-        .getRepository(CustomerEntity);
-
       const orders = await orderRepository.find({
         where: {
           cartId: testedCartId,
@@ -46,7 +46,7 @@ describe('Integration tests CartService', () => {
 
       const customer = await customerRepository.findOne({
         where: {
-          customerId: testedCustomerId,
+          externalId: testedCustomerId,
         },
       });
 
@@ -59,20 +59,14 @@ describe('Integration tests CartService', () => {
       const testedCartId = '1';
       const testedCustomerId = '1';
 
-      const orderRepository = app.get(DataSource).getRepository(OrderEntity);
-      const customerRepository = app
-        .get(DataSource)
-        .getRepository(CustomerEntity);
-
       await orderRepository.insert({
         cartId: testedCartId,
-        dateCompleted: new Date(),
         customer: new CustomerEntity(),
-        totalValue: 123,
+        totalValue: BigInt(123),
       });
 
       await customerRepository.insert({
-        customerId: testedCustomerId,
+        externalId: testedCustomerId,
       });
 
       const response = await request(app.getHttpServer())
@@ -89,7 +83,7 @@ describe('Integration tests CartService', () => {
 
       const customer = await customerRepository.findOne({
         where: {
-          customerId: testedCustomerId,
+          externalId: testedCustomerId,
         },
       });
 
@@ -108,13 +102,8 @@ describe('Integration tests CartService', () => {
       const testedCartId = '1';
       const testedCustomerId = '1';
 
-      const orderRepository = app.get(DataSource).getRepository(OrderEntity);
-      const customerRepository = app
-        .get(DataSource)
-        .getRepository(CustomerEntity);
-
       await customerRepository.insert({
-        customerId: testedCustomerId,
+        externalId: testedCustomerId,
       });
 
       const response = await request(app.getHttpServer())
@@ -131,7 +120,7 @@ describe('Integration tests CartService', () => {
 
       const customer = await customerRepository.findOne({
         where: {
-          customerId: testedCustomerId,
+          externalId: testedCustomerId,
         },
       });
 
@@ -146,13 +135,8 @@ describe('Integration tests CartService', () => {
       const testedCartId = '1000';
       const testedCustomerId = '1';
 
-      const orderRepository = app.get(DataSource).getRepository(OrderEntity);
-      const customerRepository = app
-        .get(DataSource)
-        .getRepository(CustomerEntity);
-
       await customerRepository.insert({
-        customerId: testedCustomerId,
+        externalId: testedCustomerId,
       });
 
       const response = await request(app.getHttpServer())
@@ -169,7 +153,7 @@ describe('Integration tests CartService', () => {
 
       const customer = await customerRepository.findOne({
         where: {
-          customerId: testedCustomerId,
+          externalId: testedCustomerId,
         },
       });
 
@@ -189,11 +173,6 @@ describe('Integration tests CartService', () => {
       const testedCustomerId = '11';
       const invalidProductId = '1000';
 
-      const orderRepository = app.get(DataSource).getRepository(OrderEntity);
-      const customerRepository = app
-        .get(DataSource)
-        .getRepository(CustomerEntity);
-
       const response = await request(app.getHttpServer())
         .post('/cart/finalize')
         .query({
@@ -208,7 +187,7 @@ describe('Integration tests CartService', () => {
 
       const customer = await customerRepository.findOne({
         where: {
-          customerId: testedCustomerId,
+          externalId: testedCustomerId,
         },
       });
 
@@ -227,11 +206,6 @@ describe('Integration tests CartService', () => {
       const testedCartId = '11';
       const testedCustomerId = '11';
 
-      const orderRepository = app.get(DataSource).getRepository(OrderEntity);
-      const customerRepository = app
-        .get(DataSource)
-        .getRepository(CustomerEntity);
-
       const response = await request(app.getHttpServer())
         .post('/cart/finalize')
         .query({
@@ -246,7 +220,7 @@ describe('Integration tests CartService', () => {
 
       const customer = await customerRepository.findOne({
         where: {
-          customerId: testedCustomerId,
+          externalId: testedCustomerId,
         },
       });
 

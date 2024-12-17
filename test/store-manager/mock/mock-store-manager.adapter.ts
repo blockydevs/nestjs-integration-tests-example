@@ -4,7 +4,7 @@ import { Cart } from '../../../src/cart/cart.interface';
 import * as path from 'path';
 import { promises as fs } from 'fs';
 import { Product } from '../../../src/product/product.interface';
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 
 enum AssetType {
   PRODUCT = 'PRODUCT',
@@ -13,6 +13,8 @@ enum AssetType {
 
 @Injectable()
 export class MockStoreManagerAdapter implements StoreManagerPort {
+  private readonly logger = new Logger(MockStoreManagerAdapter.name);
+
   public async getCartData(cartId: string): Promise<Cart> {
     const { data } = await this.getMockData(cartId, AssetType.CART);
 
@@ -26,7 +28,7 @@ export class MockStoreManagerAdapter implements StoreManagerPort {
   }
 
   private async getMockData(id: string, assetType: AssetType): Promise<any> {
-    let fullPath;
+    let fullPath: string;
 
     if (assetType === AssetType.CART) {
       fullPath = path.join(__dirname, 'cart', `${id}.json`);
@@ -36,10 +38,12 @@ export class MockStoreManagerAdapter implements StoreManagerPort {
 
     try {
       const data = await fs.readFile(fullPath, 'utf-8');
-      console.log(`Found data: ${JSON.stringify(JSON.parse(data), null, 2)}`);
+      this.logger.log(
+        `Found data: ${JSON.stringify(JSON.parse(data), null, 2)}`,
+      );
       return { data: JSON.parse(data) };
     } catch (e) {
-      console.error(
+      this.logger.error(
         `Error reading ${assetType === AssetType.CART ? 'cart' : 'product'} (id: ${id}) JSON file: ${e.message}`,
       );
       return { data: JSON.parse(null) };

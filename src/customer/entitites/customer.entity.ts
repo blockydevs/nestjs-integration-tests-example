@@ -6,6 +6,6 @@ export class CustomerEntity {
   @PrimaryGeneratedColumn('uuid')
   id: Uuid;
 
-  @Column({ name: 'customer_id', unique: true })
-  customerId: string;
+  @Column({ name: 'external_id', unique: true })
+  externalId: string;
 }

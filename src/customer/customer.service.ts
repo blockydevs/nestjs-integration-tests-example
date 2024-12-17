@@ -14,12 +14,12 @@ export class CustomerService {
     customerId: string,
   ): Promise<CustomerEntity> {
     let customer: CustomerEntity = await this.customerEntityRepository.findOne({
-      where: { customerId: customerId },
+      where: { externalId: customerId },
     });
 
     if (!customer) {
       customer = this.customerEntityRepository.create({
-        customerId: customerId,
+        externalId: customerId,
       });
       customer = await this.customerEntityRepository.save(customer);
     }

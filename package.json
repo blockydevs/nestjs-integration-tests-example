@@ -2,9 +2,9 @@
   "name": "nest-js-integration-test-example",
   "version": "0.0.1",
   "description": "",
-  "author": "",
+  "author": "Stanislaw Kurzyp",
   "private": true,
-  "license": "UNLICENSED",
+  "license": "MIT",
   "scripts": {
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
@@ -34,7 +34,6 @@
     "axios": "^1.7.7",
     "cache-manager-redis-yet": "^5.1.5",
     "dotenv-cli": "^7.4.2",
-    "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
     "typeorm": "^0.3.20"
   },
