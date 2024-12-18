@@ -21,7 +21,7 @@ More details can be found at: https://fakestoreapi.com/.
 
 ## 📝 Article
 This repository accompanies an article explaining the integration testing setup in Nest.js.
-For more details, visit: https://www.blockydevs.com/blog.
+For more details, visit: [https://www.blockydevs.com/blog](https://www.blockydevs.com/blog/nestjs-integration-testing-with-testcontainers).
 
 ## 🚀 Usage
 
